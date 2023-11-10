@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "budget-management"
+version = "0.1.0"
+description = ""
+authors = ["sgaeng <ksge1124@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^4.2.7"
+djangorestframework = "^3.14.0"
+djangorestframework-simplejwt = "^5.3.0"
+pyjwt = "^2.8.0"
+django-cors-headers = "^4.3.0"
+drf-yasg = "^1.21.7"
+pymysql = "^1.1.0"
+gunicorn = "^21.2.0"
+django-redis = "^5.4.0"
+django-environ = "^0.11.2"
+mysqlclient = "^2.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
