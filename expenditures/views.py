@@ -256,7 +256,7 @@ class Statistics(APIView):
                 category=category
             )
 
-    def get(self, request, format=None):
+    def get(self, request):
         # 더미 데이터 생성 (실제 서비스에서는 필요 없음)
         self.generate_dummy_data(request.user)
 

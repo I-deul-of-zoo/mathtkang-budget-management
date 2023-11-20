@@ -4,5 +4,6 @@ from budgets import views
 app_name = "budgets"
 
 urlpatterns =[
-    path('budgets/', views.CategoryList.as_view()),
+    path('/', views.CategoryList.as_view()),
+    path('rec/', views.BudgetRecommendation.as_view()),
 ]
