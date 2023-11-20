@@ -4,5 +4,6 @@ from auths import views
 app_name = "auths"
 
 urlpatterns =[
-    # path("", views.UserDetailsView.as_view()),
+    path("signup", views.SignUp.as_view()),
+    path("jwt-login", views.JWTLogin.as_view()),
 ]

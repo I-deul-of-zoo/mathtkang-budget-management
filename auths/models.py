@@ -7,4 +7,4 @@ class User(AbstractUser):
         max_length=128,
         unique=True,
     )  # 계정명
-    total = models.IntegerField()  # 총액
+    total = models.PositiveBigIntegerField(default=0)  # 총액
