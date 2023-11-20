@@ -3,6 +3,7 @@ from expenditures import views
 
 app_name = "expenditures"
 
-urlpatterns =[
-    # path("", views.UserDetailsView.as_view()),
+urlpatterns = [
+    path('', views.ExpenditureList.as_view()),
+    path('<int:id>/', views.ExpenditureDetail.as_view()),
 ]
