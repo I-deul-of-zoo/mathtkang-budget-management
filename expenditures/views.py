@@ -255,3 +255,57 @@ class Statistics(APIView):
                 user=user,
                 category=category
             )
+
+    def get(self, request, format=None):
+        # 더미 데이터 생성 (실제 서비스에서는 필요 없음)
+        self.generate_dummy_data(request.user)
+
+        # 지난 달 대비 총액 및 카테고리 별 소비율
+        last_month_start = fake.date_this_month().replace(day=1) - timedelta(days=1)
+        last_month_end = fake.date_this_month().replace(day=1) - timedelta(days=1)
+        expenditures_last_month = Expenditure.objects.filter(
+            user=request.user,
+            expense_date__range=(last_month_start, last_month_end)
+        )
+        total_last_month = expenditures_last_month.aggregate(Sum('expense_amount'))['expense_amount__sum']
+
+        category_ratios = {}
+        for category in Category.objects.all():
+            category_amount = expenditures_last_month.filter(category=category).aggregate(Sum('expense_amount'))['expense_amount__sum'] or 0
+            if total_last_month > 0:
+                category_ratio = (category_amount / total_last_month) * 100
+            else:
+                category_ratio = 0
+            category_ratios[category.name] = round(category_ratio, 2)
+
+        # 지난 요일 대비 소비율
+        today = fake.date_this_month()
+        weekday = today.weekday()
+        expenditures_last_weekday = Expenditure.objects.filter(
+            user=request.user,
+            expense_date__week_day=weekday
+        )
+        total_last_weekday = expenditures_last_weekday.aggregate(Sum('expense_amount'))['expense_amount__sum'] or 0
+
+        last_weekday_ratio = 0
+        if total_last_weekday > 0:
+            last_weekday_ratio = (total_last_weekday / total_last_month) * 100
+
+        # 다른 유저 대비 소비율
+        total_users = 3  # (3명의 유저인 경우)
+        total_expenditure_other_users = Expenditure.objects.exclude(user=request.user).aggregate(Sum('expense_amount'))['expense_amount__sum'] or 0
+        total_expenditure_avg = total_expenditure_other_users / total_users
+        user_expenditure = expenditures_last_month.aggregate(Sum('expense_amount'))['expense_amount__sum'] or 0
+
+        other_users_ratio = 0
+        if total_expenditure_avg > 0:
+            other_users_ratio = (user_expenditure / total_expenditure_avg) * 100
+
+        result_data = {
+            'total_last_month': total_last_month,
+            'category_ratios': category_ratios,
+            'last_weekday_ratio': round(last_weekday_ratio, 2),
+            'other_users_ratio': round(other_users_ratio, 2)
+        }
+
+        return Response(result_data)
