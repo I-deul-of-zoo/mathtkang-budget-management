@@ -1,7 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Sum
 from django.utils.dateparse import parse_datetime
-from django.db.models.functions import ExtractMonth
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -119,6 +118,67 @@ class ExpenditureDetail(APIView):
             {'error': 'Expenditure not found'}, 
             status=status.HTTP_404_NOT_FOUND
         )
+
+
+class TodayRecommendation(APIView):
+    def get(self, request, format=None):
+        # 오늘 지출 가능 금액 계산
+        today = datetime.now().date()
+
+        # 월별 카테고리 예산 조회
+        categories = Category.objects.all()
+        category_budgets = {}
+        for category in categories:
+            category_budget = category.budget_set.filter(user=request.user).first()
+            if category_budget:
+                category_budgets[category.name] = category_budget.amount
+            else:
+                category_budgets[category.name] = 0
+
+        # 이전 일자의 과다 소비 고려하여 오늘 예산 계산
+        expenditures_before_today = Expenditure.objects.filter(
+            user=request.user,
+            expense_date__date__lt=today
+        )
+        total_expenditure_before_today = expenditures_before_today.aggregate(Sum('expense_amount'))['expense_amount__sum']
+
+        remaining_days = (today.replace(day=1) + timedelta(days=31) - today).days
+        remaining_budget = max(0, sum(category_budgets.values()) - total_expenditure_before_today)
+        daily_budget = remaining_budget / remaining_days if remaining_days > 0 else 0
+
+        # 카테고리 별 오늘 지출 가능 금액 계산
+        category_recommendations = {}
+        for category_name, category_budget in category_budgets.items():
+            category_expenditure_before_today = (
+                expenditures_before_today.filter(category__name=category_name)
+                                        .aggregate(Sum('expense_amount'))['expense_amount__sum'] or 0
+            )
+            category_remaining_budget = max(0, category_budget - category_expenditure_before_today)
+            category_daily_budget = category_remaining_budget / remaining_days if remaining_days > 0 else 0
+            category_recommendations[category_name] = round(category_daily_budget)
+
+        # 메시지 생성
+        total_recommendation = round(daily_budget)
+        message = self.generate_recommendation_message(total_recommendation)
+
+        # 결과 반환
+        result_data = {
+            'total_recommendation': total_recommendation,
+            'category_recommendations': category_recommendations,
+            'message': message
+        }
+
+        return Response(result_data)
+
+    def generate_recommendation_message(self, total_recommendation):
+        if total_recommendation == 0:
+            return "오늘은 예산을 모두 사용했어요. 다음에는 더 신중하게 사용해보세요!"
+        elif total_recommendation > 0 and total_recommendation <= 10000:
+            return "잘 아끼고 있을 때, 적당히 사용 중이시네요. 계속 이렇게 가세요!"
+        elif total_recommendation > 10000 and total_recommendation <= 20000:
+            return "기준을 조금 넘었을 때. 조금 더 절약해보는 건 어떨까요?"
+        else:
+            return "예산을 많이 초과하셨어요. 지출을 줄이는 노하우를 찾아보세요!"
 
 
 class NotiTodayExpenditure(APIView):
