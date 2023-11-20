@@ -1,6 +1,9 @@
+import random
+from faker import Faker
 from datetime import datetime, timedelta
 from django.db.models import Sum
 from django.utils.dateparse import parse_datetime
+from django.db.models.functions import ExtractDay, ExtractWeekDay
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -9,6 +12,8 @@ from rest_framework.response import Response
 from budgets.models import Category, Budget
 from expenditures.models import Expenditure
 from expenditures.serializers import ExpenditureSerializer
+
+fake = Faker()
 
 
 class ExpenditureList(APIView):
@@ -234,3 +239,19 @@ class NotiTodayExpenditure(APIView):
         }
 
         return Response(result_data)
+
+
+class Statistics(APIView):
+    def generate_dummy_data(self, user, num_entries=30):
+        # 더미 데이터 생성
+        categories = Category.objects.all()
+        for _ in range(num_entries):
+            date = fake.date_this_month()
+            category = random.choice(categories)
+            amount = random.randint(1000, 50000)
+            Expenditure.objects.create(
+                expense_date=date,
+                expense_amount=amount,
+                user=user,
+                category=category
+            )
