@@ -86,14 +86,6 @@ if MYSQL_DB:
             'HOST': env("DB_HOST"),
             'PORT': env("DB_PORT"),
         },
-        # 'test': {
-        #     'ENGINE': 'django.db.backends.mysql',
-        #     'NAME': env("TEST_DB_NAME"),
-        #     'USER': env("TEST_DB_USER"),
-        #     'PASSWORD': env("TEST_DB_PASSWORD"),
-        #     'HOST': env("TEST_DB_HOST"),
-        #     'PORT': env("TEST_DB_PORT"),
-        # },
     }
 else:
     DATABASES = {
